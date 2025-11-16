@@ -33,6 +33,14 @@ def add_fee(student_id, amount, note):
                 (amount, today, note, student_id))
     conn.commit()
 
+def delete_fee(student_id):
+    cur.execute("UPDATE students SET fee_amount=NULL, fee_date=NULL, note=NULL WHERE id=?", (student_id,))
+    conn.commit()
+
+def delete_student(student_id):
+    cur.execute("DELETE FROM students WHERE id=?", (student_id,))
+    conn.commit()
+
 def get_class_students(class_name):
     return pd.read_sql_query(
         "SELECT id, roll_no, name, fee_amount, fee_date, note FROM students WHERE class_name=? ORDER BY roll_no",
@@ -58,15 +66,18 @@ def get_monthly_record(month):
 
 
 # ---------- STREAMLIT UI ----------
-st.title("🏫The Tecrix AI School Fee Management System")
+st.title("🏫 The Tecrix AI School Fee Management System")
 
 menu = st.sidebar.selectbox("Select Option", [
     "Add Student",
     "Add Fee",
     "Show Class Record",
     "Total School Fee",
-    "Previous Months Record"
+    "Previous Months Record",
+    "Delete Student Fee",
+    "Delete Student"
 ])
+
 
 # ---------------- ADD STUDENT ----------------
 if menu == "Add Student":
@@ -146,3 +157,40 @@ elif menu == "Previous Months Record":
 
             total_month_fee = df_month['fee_amount'].sum()
             st.success(f"💰 **Total Fee Collected in {selected_month}: {total_month_fee} Rs**")
+
+
+
+# ---------------- DELETE FEE ----------------
+elif menu == "Delete Student Fee":
+    st.subheader("❌ Delete Student Fee")
+
+    classes = all_classes()
+    selected_class = st.selectbox("Select Class", classes)
+
+    if selected_class:
+        df_students = get_class_students(selected_class)
+        student_options = {f"{row['roll_no']} - {row['name']}": row['id'] for index, row in df_students.iterrows()}
+        student_label = st.selectbox("Select Student", list(student_options.keys()))
+        student_id = student_options[student_label]
+
+        if st.button("Delete Fee Record"):
+            delete_fee(student_id)
+            st.success("Student Fee Deleted Successfully!")
+
+
+# ---------------- DELETE STUDENT ----------------
+elif menu == "Delete Student":
+    st.subheader("🗑️ Delete Student From System")
+
+    classes = all_classes()
+    selected_class = st.selectbox("Select Class", classes)
+
+    if selected_class:
+        df_students = get_class_students(selected_class)
+        student_options = {f"{row['roll_no']} - {row['name']}": row['id'] for index, row in df_students.iterrows()}
+        student_label = st.selectbox("Select Student", list(student_options.keys()))
+        student_id = student_options[student_label]
+
+        if st.button("Delete Student"):
+            delete_student(student_id)
+            st.success("Student Deleted Successfully!")
