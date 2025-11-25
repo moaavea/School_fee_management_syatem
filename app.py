@@ -194,3 +194,4 @@ elif menu == "Delete Student":
         if st.button("Delete Student"):
             delete_student(student_id)
             st.success("Student Deleted Successfully!")
+
